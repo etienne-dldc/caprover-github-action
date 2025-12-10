@@ -166,18 +166,18 @@ The `config` input allows you to merge custom configuration directly into the ap
     caprover-app-name: my-app
     config: |
       {
-        "envVars": [
-          {"key": "NODE_ENV", "value": "production"},
-          {"key": "API_KEY", "value": "${{ secrets.API_KEY }}"}
-        ],
-        "volumes": [
-          {"containerPath": "/data", "volumeName": "my-volume"},
-          {"containerPath": "/logs", "hostPath": "/var/logs"}
-        ],
-        "ports": [
-          {"containerPort": 3000, "hostPort": 3000},
-          {"containerPort": 8000, "hostPort": 8001, "protocol": "udp"}
-        ]
+        "envVars": {
+          "NODE_ENV": "production",
+          "API_KEY": "${{ secrets.API_KEY }}"
+        },
+        "volumes": {
+          "/data": "my-volume",
+          "/logs": "/var/logs"
+        },
+        "ports": {
+          "3000": 3000,
+          "8000": 8001
+        }
       }
 ```
 
@@ -187,16 +187,36 @@ The `config` object is validated against a schema and supports the following pro
 
 **Environment Variables** (`envVars` - optional):
 
+Can be either an object or an array format:
+
 ```typescript
+// Object format (simpler)
+"envVars": {
+  "NODE_ENV": "production",
+  "API_KEY": "secret-value"
+}
+
+// Or array format
 interface IAppEnvVar {
   key: string; // required
   value: string; // required
 }
 ```
 
+Both formats are automatically converted to the array format internally.
+
 **Volumes** (`volumes` - optional):
 
+Can be either an object or an array format:
+
 ```typescript
+// Object format (simpler) - containerPath as key, hostPath or volumeName as value
+"volumes": {
+  "/data": "my-volume",           // uses volumeName (no leading /)
+  "/logs": "/var/logs"            // uses hostPath (starts with /)
+}
+
+// Or array format
 interface IAppVolume {
   containerPath: string; // required
   volumeName?: string; // optional - named volume to use
@@ -205,9 +225,20 @@ interface IAppVolume {
 }
 ```
 
+Both formats are automatically converted to the array format internally. In object format, if the value starts with `/`, it's treated as a host path, otherwise as a volume name.
+
 **Ports** (`ports` - optional):
 
+Can be either an object or an array format:
+
 ```typescript
+// Object format (simpler) - containerPort as key, hostPort as value
+"ports": {
+  "3000": 3000,       // containerPort 3000 maps to hostPort 3000
+  "8000": 8001        // containerPort 8000 maps to hostPort 8001
+}
+
+// Or array format
 interface IAppPort {
   containerPort: number; // required
   hostPort: number; // required
@@ -215,6 +246,8 @@ interface IAppPort {
   publishMode?: "ingress" | "host"; // optional
 }
 ```
+
+Both formats are automatically converted to the array format internally. Use array format if you need to specify protocol or publishMode.
 
 **Other Optional Properties:**
 

@@ -69,9 +69,13 @@ const IAppPortSchema = v.object({
 });
 
 const AppConfigSchema = v.object({
-  envVars: v.optional(v.array(IAppEnvVarSchema)),
-  volumes: v.optional(v.array(IAppVolumeSchema)),
-  ports: v.optional(v.array(IAppPortSchema)),
+  envVars: v.optional(
+    v.union([v.array(IAppEnvVarSchema), v.record(v.string())])
+  ),
+  volumes: v.optional(
+    v.union([v.array(IAppVolumeSchema), v.record(v.string())])
+  ),
+  ports: v.optional(v.union([v.array(IAppPortSchema), v.record(v.number())])),
   description: v.optional(v.string()),
   forceSsl: v.optional(v.union([v.literal(true), v.literal(false)])),
   websocketSupport: v.optional(v.union([v.literal(true), v.literal(false)])),
@@ -97,6 +101,42 @@ function parseConfig(configJson) {
     }
     // Validate config against schema
     const validatedConfig = v.parse(AppConfigSchema, config);
+
+    // Transform envVars from object format to array format if needed
+    if (validatedConfig.envVars && !Array.isArray(validatedConfig.envVars)) {
+      validatedConfig.envVars = Object.entries(validatedConfig.envVars).map(
+        ([key, value]) => ({
+          key,
+          value: String(value),
+        })
+      );
+    }
+
+    // Transform volumes from object format to array format if needed
+    if (validatedConfig.volumes && !Array.isArray(validatedConfig.volumes)) {
+      validatedConfig.volumes = Object.entries(validatedConfig.volumes).map(
+        ([containerPath, pathOrVolume]) => {
+          const volume = { containerPath };
+          if (String(pathOrVolume).startsWith("/")) {
+            volume.hostPath = String(pathOrVolume);
+          } else {
+            volume.volumeName = String(pathOrVolume);
+          }
+          return volume;
+        }
+      );
+    }
+
+    // Transform ports from object format to array format if needed
+    if (validatedConfig.ports && !Array.isArray(validatedConfig.ports)) {
+      validatedConfig.ports = Object.entries(validatedConfig.ports).map(
+        ([containerPort, hostPort]) => ({
+          containerPort: Number(containerPort),
+          hostPort: Number(hostPort),
+        })
+      );
+    }
+
     return validatedConfig;
   } catch (error) {
     throw new Error(`Invalid config format: ${error.message}`);
