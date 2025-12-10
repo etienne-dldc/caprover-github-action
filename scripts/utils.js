@@ -1,5 +1,6 @@
 const CapRoverAPI = require("caprover-api").default;
 const { SimpleAuthenticationProvider } = require("caprover-api");
+const v = require("valibot");
 
 function createCapRoverAPI(password, serverUrl) {
   const authProvider = new SimpleAuthenticationProvider(() => {
@@ -47,6 +48,39 @@ function waitFor(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Valibot schemas for CapRover configuration
+const IAppEnvVarSchema = v.object({
+  key: v.string(),
+  value: v.string(),
+});
+
+const IAppVolumeSchema = v.object({
+  containerPath: v.string(),
+  volumeName: v.optional(v.string()),
+  hostPath: v.optional(v.string()),
+  mode: v.optional(v.string()),
+});
+
+const IAppPortSchema = v.object({
+  containerPort: v.number(),
+  hostPort: v.number(),
+  protocol: v.optional(v.union([v.literal("tcp"), v.literal("udp")])),
+  publishMode: v.optional(v.union([v.literal("ingress"), v.literal("host")])),
+});
+
+const AppConfigSchema = v.object({
+  envVars: v.optional(v.array(IAppEnvVarSchema)),
+  volumes: v.optional(v.array(IAppVolumeSchema)),
+  ports: v.optional(v.array(IAppPortSchema)),
+  description: v.optional(v.string()),
+  forceSsl: v.optional(v.union([v.literal(true), v.literal(false)])),
+  websocketSupport: v.optional(v.union([v.literal(true), v.literal(false)])),
+  instanceCount: v.optional(v.number()),
+  containerHttpPort: v.optional(v.number()),
+  redirectDomain: v.optional(v.string()),
+  customNginxConfig: v.optional(v.string()),
+});
+
 function parseConfig(configJson) {
   if (!configJson) {
     return {};
@@ -61,9 +95,11 @@ function parseConfig(configJson) {
     ) {
       throw new Error("Config must be a JSON object");
     }
-    return config;
+    // Validate config against schema
+    const validatedConfig = v.parse(AppConfigSchema, config);
+    return validatedConfig;
   } catch (error) {
-    throw new Error(`Invalid JSON format for config: ${error.message}`);
+    throw new Error(`Invalid config format: ${error.message}`);
   }
 }
 

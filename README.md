@@ -183,18 +183,18 @@ The `config` input allows you to merge custom configuration directly into the ap
 
 #### Configuration Schema
 
-The `config` object supports all properties from the CapRover `IAppDefinitionBase` interface:
+The `config` object is validated against a schema and supports the following properties:
 
-**Environment Variables** (`envVars`):
+**Environment Variables** (`envVars` - optional):
 
 ```typescript
 interface IAppEnvVar {
-  key: string;
-  value: string;
+  key: string; // required
+  value: string; // required
 }
 ```
 
-**Volumes** (`volumes`):
+**Volumes** (`volumes` - optional):
 
 ```typescript
 interface IAppVolume {
@@ -205,7 +205,7 @@ interface IAppVolume {
 }
 ```
 
-**Ports** (`ports`):
+**Ports** (`ports` - optional):
 
 ```typescript
 interface IAppPort {
@@ -216,7 +216,17 @@ interface IAppPort {
 }
 ```
 
-Other supported properties include: `description`, `forceSsl`, `websocketSupport`, `instanceCount`, `containerHttpPort`, `redirectDomain`, `customNginxConfig`, and more.
+**Other Optional Properties:**
+
+- `description?: string` - App description
+- `forceSsl?: boolean` - Force SSL for the app
+- `websocketSupport?: boolean` - Enable WebSocket support
+- `instanceCount?: number` - Number of app instances
+- `containerHttpPort?: number` - HTTP port in container
+- `redirectDomain?: string` - Redirect domain
+- `customNginxConfig?: string` - Custom Nginx configuration
+
+All properties are validated for correct types and formats. Invalid configurations will result in an error.
 
 ### In GitHub Repository
 
