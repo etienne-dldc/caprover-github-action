@@ -2,7 +2,6 @@
   "name": "caprover-github-action",
   "version": "1.0.0",
   "description": "GitHub Action for setting up and cleaning up CapRover applications",
-  "type": "module",
   "main": "action.yml",
   "scripts": {},
   "keywords": [],

@@ -1,4 +1,4 @@
-import { createCapRoverAPI, validateCapRoverEnv } from "./utils.mjs";
+const { createCapRoverAPI, validateCapRoverEnv } = require("./utils");
 
 async function main() {
   const env = validateCapRoverEnv();

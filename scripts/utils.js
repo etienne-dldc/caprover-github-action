@@ -1,6 +1,7 @@
-import CapRoverAPI, { SimpleAuthenticationProvider } from "caprover-api";
+const CapRoverAPI = require("caprover-api").default;
+const { SimpleAuthenticationProvider } = require("caprover-api");
 
-export function createCapRoverAPI(password, serverUrl) {
+function createCapRoverAPI(password, serverUrl) {
   const authProvider = new SimpleAuthenticationProvider(() => {
     return Promise.resolve({ password, otpToken: undefined });
   });
@@ -8,7 +9,7 @@ export function createCapRoverAPI(password, serverUrl) {
   return new CapRoverAPI(serverUrl, authProvider);
 }
 
-export function validateCapRoverEnv() {
+function validateCapRoverEnv() {
   const password = process.env.CAPROVER_PASSWORD;
   const appName = process.env.CAPROVER_APP_NAME;
   const server = process.env.CAPROVER_SERVER;
@@ -31,7 +32,7 @@ export function validateCapRoverEnv() {
   };
 }
 
-export function getAppName(baseName) {
+function getAppName(baseName) {
   const isMainBranch = process.env.GITHUB_REF === "refs/heads/main";
   const appName = isMainBranch
     ? baseName
@@ -42,6 +43,13 @@ export function getAppName(baseName) {
 }
 
 // Helper function to wait for a specified time (in milliseconds)
-export function waitFor(ms) {
+function waitFor(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+module.exports = {
+  createCapRoverAPI,
+  validateCapRoverEnv,
+  getAppName,
+  waitFor,
+};

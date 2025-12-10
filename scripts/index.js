@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+const { execSync } = require("child_process");
 
 const command = process.env.COMMAND;
 
@@ -7,9 +7,9 @@ if (!command) {
 }
 
 if (command === "setup") {
-  execSync("node scripts/setup-caprover-app.mjs", { stdio: "inherit" });
+  execSync("node scripts/setup-caprover-app.js", { stdio: "inherit" });
 } else if (command === "cleanup") {
-  execSync("node scripts/cleanup-preview-app.mjs", {
+  execSync("node scripts/cleanup-preview-app.js", {
     stdio: "inherit",
   });
 } else {
