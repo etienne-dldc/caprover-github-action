@@ -7,9 +7,9 @@ if (!command) {
 }
 
 if (command === "setup") {
-  execSync("node scripts/setup-caprover-app.js", { stdio: "inherit" });
+  execSync("node scripts/setup-caprover-app.mjs", { stdio: "inherit" });
 } else if (command === "cleanup") {
-  execSync("node scripts/cleanup-preview-app.js", {
+  execSync("node scripts/cleanup-preview-app.mjs", {
     stdio: "inherit",
   });
 } else {

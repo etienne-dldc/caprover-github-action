@@ -1,5 +1,5 @@
 import { appendFileSync } from "fs";
-import { createCapRoverAPI, validateCapRoverEnv, waitFor } from "./utils.js";
+import { createCapRoverAPI, validateCapRoverEnv, waitFor } from "./utils.mjs";
 
 async function main() {
   const env = validateCapRoverEnv();
