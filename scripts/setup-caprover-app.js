@@ -17,6 +17,7 @@ async function main() {
 
   // Get all apps and check if our app exists
   let allAppDefs = await caprover.getAllApps();
+  await waitFor(100);
   let appDef =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
@@ -93,6 +94,7 @@ async function main() {
     console.log(`Enabling SSL for app "${appName}"...`);
     try {
       await caprover.enableSslForBaseDomain(appName);
+      await waitFor(100);
       console.log(`SSL enabled for app "${appName}".`);
     } catch (sslError) {
       console.warn(
@@ -105,8 +107,8 @@ async function main() {
   }
 
   // Fetch final app state to ensure all changes are applied
-  await waitFor(100);
   allAppDefs = await caprover.getAllApps();
+  await waitFor(100);
   appDef =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
