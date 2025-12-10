@@ -12,13 +12,15 @@ A GitHub Action for setting up and cleaning up CapRover applications. Supports b
 
 ### Common Inputs
 
-| Input               | Description                                                | Required |
-| ------------------- | ---------------------------------------------------------- | -------- |
-| `command`           | Action to perform: `"setup"` or `"cleanup"`                | Yes      |
-| `caprover-password` | CapRover admin password                                    | Yes      |
-| `caprover-server`   | CapRover server URL (e.g., `https://caprover.example.com`) | Yes      |
-| `caprover-app-name` | CapRover application name to setup or cleanup              | Yes      |
-| `enable-ssl`        | Enable SSL for the app (setup only, default: `"true"`)     | No       |
+| Input                 | Description                                                                   | Required |
+| --------------------- | ----------------------------------------------------------------------------- | -------- |
+| `command`             | Action to perform: `"setup"` or `"cleanup"`                                   | Yes      |
+| `caprover-password`   | CapRover admin password                                                       | Yes      |
+| `caprover-server`     | CapRover server URL (e.g., `https://caprover.example.com`)                    | Yes      |
+| `caprover-app-name`   | CapRover application name to setup or cleanup                                 | Yes      |
+| `enable-ssl`          | Enable SSL for the app (setup only, default: `"true"`)                        | No       |
+| `has-persistent-data` | Mark app as having persistent data (setup only, default: `"false"`)           | No       |
+| `config`              | Additional app configuration as JSON (setup only, merged with app definition) | No       |
 
 ## Outputs
 
@@ -149,6 +151,73 @@ jobs:
 4. Repository variables configured:
    - `CAPROVER_SERVER`: Your CapRover server URL
 
+### Configuration Options
+
+The `config` input allows you to merge custom configuration directly into the app definition. Pass a JSON object with any properties from the `IAppDefinitionBase` interface.
+
+#### Example: Environment Variables, Volumes, and Ports
+
+```yaml
+- uses: etienne-dldc/caprover-github-action@v1
+  with:
+    command: "setup"
+    caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
+    caprover-server: ${{ vars.CAPROVER_SERVER }}
+    caprover-app-name: my-app
+    config: |
+      {
+        "envVars": [
+          {"key": "NODE_ENV", "value": "production"},
+          {"key": "API_KEY", "value": "${{ secrets.API_KEY }}"}
+        ],
+        "volumes": [
+          {"containerPath": "/data", "volumeName": "my-volume"},
+          {"containerPath": "/logs", "hostPath": "/var/logs"}
+        ],
+        "ports": [
+          {"containerPort": 3000, "hostPort": 3000},
+          {"containerPort": 8000, "hostPort": 8001, "protocol": "udp"}
+        ]
+      }
+```
+
+#### Configuration Schema
+
+The `config` object supports all properties from the CapRover `IAppDefinitionBase` interface:
+
+**Environment Variables** (`envVars`):
+
+```typescript
+interface IAppEnvVar {
+  key: string;
+  value: string;
+}
+```
+
+**Volumes** (`volumes`):
+
+```typescript
+interface IAppVolume {
+  containerPath: string; // required
+  volumeName?: string; // optional - named volume to use
+  hostPath?: string; // optional - host path for bind mounts
+  mode?: string; // optional - e.g., "ro" for read-only
+}
+```
+
+**Ports** (`ports`):
+
+```typescript
+interface IAppPort {
+  containerPort: number; // required
+  hostPort: number; // required
+  protocol?: "udp" | "tcp"; // optional - default: "tcp"
+  publishMode?: "ingress" | "host"; // optional
+}
+```
+
+Other supported properties include: `description`, `forceSsl`, `websocketSupport`, `instanceCount`, `containerHttpPort`, `redirectDomain`, `customNginxConfig`, and more.
+
 ### In GitHub Repository
 
 1. Go to **Settings** → **Secrets and variables** → **Actions**
@@ -164,8 +233,9 @@ jobs:
 2. Checks if the application already exists
 3. Creates the application if it doesn't exist
 4. Enables the deploy token for the application
-5. Optionally enables SSL (if `enable-ssl` is `"true"`)
-6. Outputs the deploy token for subsequent steps
+5. Merges custom configuration if provided
+6. Optionally enables SSL (if `enable-ssl` is `"true"`)
+7. Outputs the deploy token for subsequent steps
 
 ### Cleanup Command
 

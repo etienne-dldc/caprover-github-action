@@ -24,6 +24,15 @@ inputs:
     required: false
     default: "true"
 
+  has-persistent-data:
+    description: "Mark app as having persistent data (setup command only, default: false)"
+    required: false
+    default: "false"
+
+  config:
+    description: "Additional app configuration as JSON (setup command only). Merges with app definition. Schema: { envVars?: IAppEnvVar[], volumes?: IAppVolume[], ports?: IAppPort[], ... }"
+    required: false
+
 outputs:
   app-token:
     description: "The CapRover deploy token for the app (only for setup command)"
@@ -53,6 +62,8 @@ runs:
         CAPROVER_SERVER: ${{ inputs.caprover-server }}
         CAPROVER_APP_NAME: ${{ inputs.caprover-app-name }}
         ENABLE_SSL: ${{ inputs.enable-ssl }}
+        HAS_PERSISTENT_DATA: ${{ inputs.has-persistent-data }}
+        CONFIG: ${{ inputs.config }}
 
 branding:
   icon: "cloud"

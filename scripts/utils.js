@@ -47,9 +47,30 @@ function waitFor(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function parseConfig(configJson) {
+  if (!configJson) {
+    return {};
+  }
+
+  try {
+    const config = JSON.parse(configJson);
+    if (
+      typeof config !== "object" ||
+      config === null ||
+      Array.isArray(config)
+    ) {
+      throw new Error("Config must be a JSON object");
+    }
+    return config;
+  } catch (error) {
+    throw new Error(`Invalid JSON format for config: ${error.message}`);
+  }
+}
+
 module.exports = {
   createCapRoverAPI,
   validateCapRoverEnv,
   getAppName,
   waitFor,
+  parseConfig,
 };
