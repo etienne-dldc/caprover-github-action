@@ -1,24 +1,22 @@
-const { appendFileSync } = require("fs");
-const {
-  createCapRoverAPI,
-  validateCapRoverEnv,
-  waitFor,
-  parseConfig,
-} = require("./utils");
+import { appendFileSync } from "fs";
+import * as caprover from "./caprover.js";
+import { IAppDef } from "./models/AppDefinition.js";
+import { parseConfig, validateCapRoverEnv } from "./utils.js";
 
-async function main() {
+async function main(): Promise<void> {
   const env = validateCapRoverEnv();
-  const caprover = createCapRoverAPI(env.caproverPassword, env.caproverServer);
-
+  const { token } = await caprover.login(
+    env.caproverServer,
+    env.caproverPassword
+  );
   // Use app name directly from environment
   const appName = env.caproverAppName;
 
   console.log(`Checking for app: ${appName}`);
 
   // Get all apps and check if our app exists
-  let allAppDefs = await caprover.getAllApps();
-  await waitFor(100);
-  let appDef =
+  let allAppDefs = await caprover.getAllApps(env.caproverServer, token);
+  let appDef: IAppDef | null =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
   if (!appDef) {
@@ -27,12 +25,20 @@ async function main() {
     try {
       // Register the new app with settings from environment
       const hasPersistentData = process.env.HAS_PERSISTENT_DATA === "true";
-      await caprover.registerNewApp(appName, "", hasPersistentData, false);
+      await caprover.registerNewApp(
+        env.caproverServer,
+        token,
+        appName,
+        "",
+        hasPersistentData
+      );
       console.log(`App "${appName}" created successfully.`);
-      await waitFor(500);
 
       // Fetch app definition
-      const appsAfterCreate = await caprover.getAllApps();
+      const appsAfterCreate = await caprover.getAllApps(
+        env.caproverServer,
+        token
+      );
       appDef =
         appsAfterCreate.appDefinitions?.find(
           (app) => app.appName === appName
@@ -44,7 +50,9 @@ async function main() {
     } catch (error) {
       throw new Error(
         `Failed to create app "${appName}": ${
-          error && error.message ? error.message : String(error)
+          error && (error as Error).message
+            ? (error as Error).message
+            : String(error)
         }`
       );
     }
@@ -59,13 +67,14 @@ async function main() {
   if (enableSsl && !appDef.hasDefaultSubDomainSsl) {
     console.log(`Enabling SSL for app "${appName}"...`);
     try {
-      await caprover.enableSslForBaseDomain(appName);
-      await waitFor(100);
+      await caprover.enableSslForBaseDomain(env.caproverServer, token, appName);
       console.log(`SSL enabled for app "${appName}".`);
     } catch (sslError) {
       console.warn(
         `Warning: Failed to enable SSL: ${
-          sslError && sslError.message ? sslError.message : String(sslError)
+          sslError && (sslError as Error).message
+            ? (sslError as Error).message
+            : String(sslError)
         }`
       );
       console.log("Continuing without SSL...");
@@ -93,7 +102,9 @@ async function main() {
     } catch (error) {
       throw new Error(
         `Failed to parse config: ${
-          error && error.message ? error.message : String(error)
+          error && (error as Error).message
+            ? (error as Error).message
+            : String(error)
         }`
       );
     }
@@ -102,17 +113,20 @@ async function main() {
   // Save all changes at once
   if (hasChanges) {
     console.log(`Updating app "${appName}"...`);
-    await caprover.updateConfigAndSave(appName, appDef);
-    await waitFor(500);
+    await caprover.updateConfigAndSave(
+      env.caproverServer,
+      token,
+      appName,
+      appDef
+    );
   }
 
   // Fetch final app state to ensure all changes are applied
-  allAppDefs = await caprover.getAllApps();
-  await waitFor(100);
+  allAppDefs = await caprover.getAllApps(env.caproverServer, token);
   appDef =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
-  const appToken = appDef.appDeployTokenConfig?.appDeployToken;
+  const appToken = appDef?.appDeployTokenConfig?.appDeployToken;
   if (!appToken) {
     throw new Error(`No deploy token found for app "${appName}"`);
   }

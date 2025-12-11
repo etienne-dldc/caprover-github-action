@@ -2,13 +2,17 @@
   "name": "caprover-github-action",
   "version": "1.0.0",
   "description": "GitHub Action for setting up and cleaning up CapRover applications",
+  "type": "module",
   "main": "action.yml",
-  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "caprover-api": "^0.0.19",
     "valibot": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "typescript": "^5.7.0"
   }
 }

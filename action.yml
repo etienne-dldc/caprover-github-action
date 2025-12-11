@@ -55,7 +55,7 @@ runs:
       id: caprover
       shell: bash
       working-directory: ${{ github.action_path }}
-      run: node scripts/index.js
+      run: node scripts/index.ts
       env:
         COMMAND: ${{ inputs.command }}
         CAPROVER_PASSWORD: ${{ inputs.caprover-password }}

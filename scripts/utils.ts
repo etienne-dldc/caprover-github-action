@@ -1,21 +1,17 @@
-const CapRoverAPI = require("caprover-api").default;
-const { SimpleAuthenticationProvider } = require("caprover-api");
-const v = require("valibot");
+import * as v from "valibot";
 
-function createCapRoverAPI(password, serverUrl) {
-  const authProvider = new SimpleAuthenticationProvider(() => {
-    return Promise.resolve({ password, otpToken: undefined });
-  });
-
-  return new CapRoverAPI(serverUrl, authProvider);
+interface ValidatedEnv {
+  caproverPassword: string;
+  caproverAppName: string;
+  caproverServer: string;
 }
 
-function validateCapRoverEnv() {
+export function validateCapRoverEnv(): ValidatedEnv {
   const password = process.env.CAPROVER_PASSWORD;
   const appName = process.env.CAPROVER_APP_NAME;
   const server = process.env.CAPROVER_SERVER;
 
-  const missing = [];
+  const missing: string[] = [];
   if (!password) missing.push("CAPROVER_PASSWORD");
   if (!appName) missing.push("CAPROVER_APP_NAME");
   if (!server) missing.push("CAPROVER_SERVER");
@@ -27,13 +23,13 @@ function validateCapRoverEnv() {
   }
 
   return {
-    caproverPassword: password,
-    caproverAppName: appName,
-    caproverServer: server,
+    caproverPassword: password as string,
+    caproverAppName: appName as string,
+    caproverServer: server as string,
   };
 }
 
-function getAppName(baseName) {
+export function getAppName(baseName: string): string {
   const isMainBranch = process.env.GITHUB_REF === "refs/heads/main";
   const appName = isMainBranch
     ? baseName
@@ -41,11 +37,6 @@ function getAppName(baseName) {
         process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
       }`;
   return appName;
-}
-
-// Helper function to wait for a specified time (in milliseconds)
-function waitFor(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Valibot schemas for CapRover configuration
@@ -70,12 +61,14 @@ const IAppPortSchema = v.object({
 
 const AppConfigSchema = v.object({
   envVars: v.optional(
-    v.union([v.array(IAppEnvVarSchema), v.record(v.string())])
+    v.union([v.array(IAppEnvVarSchema), v.record(v.string(), v.unknown())])
   ),
   volumes: v.optional(
-    v.union([v.array(IAppVolumeSchema), v.record(v.string())])
+    v.union([v.array(IAppVolumeSchema), v.record(v.string(), v.unknown())])
   ),
-  ports: v.optional(v.union([v.array(IAppPortSchema), v.record(v.number())])),
+  ports: v.optional(
+    v.union([v.array(IAppPortSchema), v.record(v.string(), v.number())])
+  ),
   description: v.optional(v.string()),
   forceSsl: v.optional(v.union([v.literal(true), v.literal(false)])),
   websocketSupport: v.optional(v.union([v.literal(true), v.literal(false)])),
@@ -85,7 +78,9 @@ const AppConfigSchema = v.object({
   customNginxConfig: v.optional(v.string()),
 });
 
-function parseConfig(configJson) {
+export function parseConfig(
+  configJson: string | null | undefined
+): Record<string, unknown> {
   if (!configJson) {
     return {};
   }
@@ -116,7 +111,11 @@ function parseConfig(configJson) {
     if (validatedConfig.volumes && !Array.isArray(validatedConfig.volumes)) {
       validatedConfig.volumes = Object.entries(validatedConfig.volumes).map(
         ([containerPath, pathOrVolume]) => {
-          const volume = { containerPath };
+          const volume: {
+            containerPath: string;
+            hostPath?: string;
+            volumeName?: string;
+          } = { containerPath };
           if (String(pathOrVolume).startsWith("/")) {
             volume.hostPath = String(pathOrVolume);
           } else {
@@ -137,16 +136,8 @@ function parseConfig(configJson) {
       );
     }
 
-    return validatedConfig;
+    return validatedConfig as Record<string, unknown>;
   } catch (error) {
-    throw new Error(`Invalid config format: ${error.message}`);
+    throw new Error(`Invalid config format: ${(error as Error).message}`);
   }
 }
-
-module.exports = {
-  createCapRoverAPI,
-  validateCapRoverEnv,
-  getAppName,
-  waitFor,
-  parseConfig,
-};
