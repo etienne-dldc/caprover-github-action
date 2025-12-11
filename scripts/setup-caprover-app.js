@@ -29,7 +29,7 @@ async function main() {
       const hasPersistentData = process.env.HAS_PERSISTENT_DATA === "true";
       await caprover.registerNewApp(appName, "", hasPersistentData, false);
       console.log(`App "${appName}" created successfully.`);
-      await waitFor(100);
+      await waitFor(500);
 
       // Fetch app definition
       const appsAfterCreate = await caprover.getAllApps();
