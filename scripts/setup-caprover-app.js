@@ -54,6 +54,24 @@ async function main() {
     throw new Error(`Could not find app "${appName}" after setup`);
   }
 
+  // Enable SSL for the base domain (if enabled)
+  const enableSsl = process.env.ENABLE_SSL !== "false";
+  if (enableSsl) {
+    console.log(`Enabling SSL for app "${appName}"...`);
+    try {
+      await caprover.enableSslForBaseDomain(appName);
+      await waitFor(100);
+      console.log(`SSL enabled for app "${appName}".`);
+    } catch (sslError) {
+      console.warn(
+        `Warning: Failed to enable SSL: ${
+          sslError && sslError.message ? sslError.message : String(sslError)
+        }`
+      );
+      console.log("Continuing without SSL...");
+    }
+  }
+
   // Accumulate all configuration changes
   let hasChanges = false;
 
@@ -86,24 +104,6 @@ async function main() {
     console.log(`Updating app "${appName}"...`);
     await caprover.updateConfigAndSave(appName, appDef);
     await waitFor(100);
-  }
-
-  // Enable SSL for the base domain (if enabled)
-  const enableSsl = process.env.ENABLE_SSL !== "false";
-  if (enableSsl) {
-    console.log(`Enabling SSL for app "${appName}"...`);
-    try {
-      await caprover.enableSslForBaseDomain(appName);
-      await waitFor(100);
-      console.log(`SSL enabled for app "${appName}".`);
-    } catch (sslError) {
-      console.warn(
-        `Warning: Failed to enable SSL: ${
-          sslError && sslError.message ? sslError.message : String(sslError)
-        }`
-      );
-      console.log("Continuing without SSL...");
-    }
   }
 
   // Fetch final app state to ensure all changes are applied
