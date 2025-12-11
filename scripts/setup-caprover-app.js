@@ -103,7 +103,7 @@ async function main() {
   if (hasChanges) {
     console.log(`Updating app "${appName}"...`);
     await caprover.updateConfigAndSave(appName, appDef);
-    await waitFor(100);
+    await waitFor(500);
   }
 
   // Fetch final app state to ensure all changes are applied
