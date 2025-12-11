@@ -56,7 +56,7 @@ async function main() {
 
   // Enable SSL for the base domain (if enabled)
   const enableSsl = process.env.ENABLE_SSL !== "false";
-  if (enableSsl) {
+  if (enableSsl && !appDef.hasDefaultSubDomainSsl) {
     console.log(`Enabling SSL for app "${appName}"...`);
     try {
       await caprover.enableSslForBaseDomain(appName);
