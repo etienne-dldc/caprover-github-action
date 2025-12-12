@@ -1,5 +1,5 @@
-import { cleanupPreviewApp } from "./cleanup-preview-app.js";
-import { setupCaproverApp } from "./setup-caprover-app.js";
+import { cleanupPreviewApp } from "./cleanup-preview-app.ts";
+import { setupCaproverApp } from "./setup-caprover-app.ts";
 
 const command = process.env.COMMAND;
 
