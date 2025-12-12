@@ -1,13 +1,12 @@
 import { appendFileSync } from "fs";
 import * as caprover from "./caprover.ts";
 import type { IAppDef } from "./models/AppDefinition.ts";
-import { parseConfig, validateCapRoverEnv } from "./utils.ts";
+import { parseConfig, validateCapRoverEnv, withRetry } from "./utils.ts";
 
 export async function setupCaproverApp(): Promise<void> {
   const env = validateCapRoverEnv();
-  const { token } = await caprover.login(
-    env.caproverServer,
-    env.caproverPassword
+  const { token } = await withRetry(() =>
+    caprover.login(env.caproverServer, env.caproverPassword)
   );
   // Use app name directly from environment
   const appName = env.caproverAppName;
@@ -15,7 +14,9 @@ export async function setupCaproverApp(): Promise<void> {
   console.log(`Checking for app: ${appName}`);
 
   // Get all apps and check if our app exists
-  let allAppDefs = await caprover.getAllApps(env.caproverServer, token);
+  let allAppDefs = await withRetry(() =>
+    caprover.getAllApps(env.caproverServer, token)
+  );
   let appDef: IAppDef | null =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
@@ -25,19 +26,20 @@ export async function setupCaproverApp(): Promise<void> {
     try {
       // Register the new app with settings from environment
       const hasPersistentData = process.env.HAS_PERSISTENT_DATA === "true";
-      await caprover.registerNewApp(
-        env.caproverServer,
-        token,
-        appName,
-        "",
-        hasPersistentData
+      await withRetry(() =>
+        caprover.registerNewApp(
+          env.caproverServer,
+          token,
+          appName,
+          "",
+          hasPersistentData
+        )
       );
       console.log(`App "${appName}" created successfully.`);
 
       // Fetch app definition
-      const appsAfterCreate = await caprover.getAllApps(
-        env.caproverServer,
-        token
+      const appsAfterCreate = await withRetry(() =>
+        caprover.getAllApps(env.caproverServer, token)
       );
       appDef =
         appsAfterCreate.appDefinitions?.find(
@@ -63,7 +65,9 @@ export async function setupCaproverApp(): Promise<void> {
   if (enableSsl && !appDef.hasDefaultSubDomainSsl) {
     console.log(`Enabling SSL for app "${appName}"...`);
     try {
-      await caprover.enableSslForBaseDomain(env.caproverServer, token, appName);
+      await withRetry(() =>
+        caprover.enableSslForBaseDomain(env.caproverServer, token, appName)
+      );
       console.log(`SSL enabled for app "${appName}".`);
     } catch (sslError) {
       console.warn(
@@ -103,16 +107,20 @@ export async function setupCaproverApp(): Promise<void> {
   // Save all changes at once
   if (hasChanges) {
     console.log(`Updating app "${appName}"...`);
-    await caprover.updateConfigAndSave(
-      env.caproverServer,
-      token,
-      appName,
-      appDef
+    await withRetry(() =>
+      caprover.updateConfigAndSave(
+        env.caproverServer,
+        token,
+        appName,
+        appDef!
+      )
     );
   }
 
   // Fetch final app state to ensure all changes are applied
-  allAppDefs = await caprover.getAllApps(env.caproverServer, token);
+  allAppDefs = await withRetry(() =>
+    caprover.getAllApps(env.caproverServer, token)
+  );
   appDef =
     allAppDefs.appDefinitions?.find((app) => app.appName === appName) || null;
 
