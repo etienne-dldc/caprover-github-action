@@ -88,7 +88,7 @@ export async function login(
       "x-namespace": "captain",
     };
 
-    const response = await fetch(`${baseUrl}/login`, {
+    const response = await fetch(`${baseUrl}/api/v2/login`, {
       method: "POST",
       headers,
       body: JSON.stringify({ password, otpToken: otpToken || undefined }),
@@ -115,7 +115,7 @@ export async function getAllApps(
     baseUrl,
     token,
     "GET",
-    "/user/apps/appDefinitions",
+    "/api/v2/user/apps/appDefinitions",
     {}
   );
 }
@@ -131,7 +131,7 @@ export async function registerNewApp(
     baseUrl,
     token,
     "POST",
-    `/user/apps/appDefinitions/register`,
+    `/api/v2/user/apps/appDefinitions/register`,
     { appName, projectId: projectId ?? "", hasPersistentData }
   );
 }
@@ -145,7 +145,7 @@ export async function enableSslForBaseDomain(
     baseUrl,
     token,
     "POST",
-    "/user/apps/appDefinitions/enablebasedomainssl",
+    "/api/v2/user/apps/appDefinitions/enablebasedomainssl",
     { appName }
   );
 }
@@ -160,7 +160,7 @@ export async function updateConfigAndSave(
     baseUrl,
     token,
     "POST",
-    "/user/apps/appDefinitions/update",
+    "/api/v2/user/apps/appDefinitions/update",
     { ...appDefinition, appName, projectId: appDefinition.projectId ?? "" }
   );
 }
@@ -176,7 +176,7 @@ export async function deleteApp(
     baseUrl,
     token,
     "POST",
-    "/user/apps/appDefinitions/delete",
+    "/api/v2/user/apps/appDefinitions/delete",
     { appName, volumes: volumes || [], appNames: appNames || undefined }
   );
 }
