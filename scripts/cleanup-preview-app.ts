@@ -1,7 +1,7 @@
 import * as caprover from "./caprover.js";
 import { validateCapRoverEnv } from "./utils.js";
 
-async function main(): Promise<void> {
+export async function cleanupPreviewApp(): Promise<void> {
   const env = validateCapRoverEnv();
   const { token } = await caprover.login(
     env.caproverServer,
@@ -40,8 +40,3 @@ async function main(): Promise<void> {
     );
   }
 }
-
-main().catch((err) => {
-  console.error("Error during cleanup:", err);
-  process.exit(1);
-});

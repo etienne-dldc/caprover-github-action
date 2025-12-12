@@ -3,7 +3,7 @@ import * as caprover from "./caprover.js";
 import type { IAppDef } from "./models/AppDefinition.js";
 import { parseConfig, validateCapRoverEnv } from "./utils.js";
 
-async function main(): Promise<void> {
+export async function setupCaproverApp(): Promise<void> {
   const env = validateCapRoverEnv();
   const { token } = await caprover.login(
     env.caproverServer,
@@ -139,8 +139,3 @@ async function main(): Promise<void> {
     appendFileSync(outputFile, `app-token=${appToken}\n`);
   }
 }
-
-main().catch((err) => {
-  console.error("Error during setup:", err);
-  process.exit(1);
-});

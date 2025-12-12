@@ -1,4 +1,5 @@
-import { execFileSync } from "child_process";
+import { cleanupPreviewApp } from "./cleanup-preview-app.js";
+import { setupCaproverApp } from "./setup-caprover-app.js";
 
 const command = process.env.COMMAND;
 
@@ -7,13 +8,9 @@ if (!command) {
 }
 
 if (command === "setup") {
-  execFileSync("node", ["scripts/setup-caprover-app.ts"], {
-    stdio: "inherit",
-  });
+  await setupCaproverApp();
 } else if (command === "cleanup") {
-  execFileSync("node", ["scripts/cleanup-preview-app.ts"], {
-    stdio: "inherit",
-  });
+  await cleanupPreviewApp();
 } else {
   throw new Error(`Unknown command: ${command}. Must be "setup" or "cleanup".`);
 }
