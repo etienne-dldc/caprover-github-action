@@ -1,6 +1,6 @@
 import { appendFileSync } from "fs";
 import * as caprover from "./caprover.js";
-import { IAppDef } from "./models/AppDefinition.js";
+import type { IAppDef } from "./models/AppDefinition.js";
 import { parseConfig, validateCapRoverEnv } from "./utils.js";
 
 async function main(): Promise<void> {

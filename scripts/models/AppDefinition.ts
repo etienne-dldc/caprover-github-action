@@ -1,105 +1,107 @@
-import { IHashMapGeneric } from './IHashMapGeneric';
+import type { IHashMapGeneric } from "./IHashMapGeneric.ts";
 export type IAllAppDefinitions = IHashMapGeneric<IAppDef>;
 export interface IAppEnvVar {
-    key: string;
-    value: string;
+  key: string;
+  value: string;
 }
 export declare const enum VolumesTypes {
-    BIND = "bind",
-    VOLUME = "volume"
+  BIND = "bind",
+  VOLUME = "volume",
 }
 export interface IAppVolume {
-    containerPath: string;
-    volumeName?: string;
-    hostPath?: string;
-    mode?: string;
+  containerPath: string;
+  volumeName?: string;
+  hostPath?: string;
+  mode?: string;
 }
 export interface IAppPort {
-    containerPort: number;
-    hostPort: number;
-    protocol?: 'udp' | 'tcp';
-    publishMode?: 'ingress' | 'host';
+  containerPort: number;
+  hostPort: number;
+  protocol?: "udp" | "tcp";
+  publishMode?: "ingress" | "host";
 }
 export interface RepoInfo {
-    repo: string;
-    branch: string;
-    user: string;
-    sshKey?: string;
-    password: string;
+  repo: string;
+  branch: string;
+  user: string;
+  sshKey?: string;
+  password: string;
 }
 export interface RepoInfoEncrypted {
-    repo: string;
-    branch: string;
-    user: string;
-    sshKeyEncrypted?: string;
-    passwordEncrypted: string;
+  repo: string;
+  branch: string;
+  user: string;
+  sshKeyEncrypted?: string;
+  passwordEncrypted: string;
 }
 export interface IAppVersion {
-    version: number;
-    deployedImageName?: string;
-    timeStamp: string;
-    gitHash: string | undefined;
+  version: number;
+  deployedImageName?: string;
+  timeStamp: string;
+  gitHash: string | undefined;
 }
 export interface IAppCustomDomain {
-    publicDomain: string;
-    hasSsl: boolean;
+  publicDomain: string;
+  hasSsl: boolean;
 }
 export interface IAppTag {
-    tagName: string;
+  tagName: string;
 }
 export interface IAppDefinitionBase {
-    projectId?: string | undefined;
-    description?: string;
-    deployedVersion: number;
-    notExposeAsWebApp: boolean;
-    hasPersistentData: boolean;
-    hasDefaultSubDomainSsl: boolean;
-    containerHttpPort?: number;
-    captainDefinitionRelativeFilePath: string;
-    forceSsl: boolean;
-    websocketSupport: boolean;
-    nodeId?: string;
-    instanceCount: number;
-    preDeployFunction?: string;
-    serviceUpdateOverride?: string;
-    customNginxConfig?: string;
-    redirectDomain?: string;
-    networks: string[];
-    customDomain: IAppCustomDomain[];
-    tags?: IAppTag[];
-    ports: IAppPort[];
-    volumes: IAppVolume[];
-    envVars: IAppEnvVar[];
-    versions: IAppVersion[];
-    appDeployTokenConfig?: AppDeployTokenConfig;
+  projectId?: string | undefined;
+  description?: string;
+  deployedVersion: number;
+  notExposeAsWebApp: boolean;
+  hasPersistentData: boolean;
+  hasDefaultSubDomainSsl: boolean;
+  containerHttpPort?: number;
+  captainDefinitionRelativeFilePath: string;
+  forceSsl: boolean;
+  websocketSupport: boolean;
+  nodeId?: string;
+  instanceCount: number;
+  preDeployFunction?: string;
+  serviceUpdateOverride?: string;
+  customNginxConfig?: string;
+  redirectDomain?: string;
+  networks: string[];
+  customDomain: IAppCustomDomain[];
+  tags?: IAppTag[];
+  ports: IAppPort[];
+  volumes: IAppVolume[];
+  envVars: IAppEnvVar[];
+  versions: IAppVersion[];
+  appDeployTokenConfig?: AppDeployTokenConfig;
 }
 export interface IHttpAuth {
-    user: string;
-    password?: string;
-    passwordHashed?: string;
+  user: string;
+  password?: string;
+  passwordHashed?: string;
 }
 export interface AppDeployTokenConfig {
-    enabled: boolean;
-    appDeployToken?: string;
+  enabled: boolean;
+  appDeployToken?: string;
 }
 export interface IAppDef extends IAppDefinitionBase {
-    appPushWebhook?: {
-        tokenVersion: string;
-        repoInfo: RepoInfo;
-        pushWebhookToken: string;
-    };
-    httpAuth?: IHttpAuth;
-    appName?: string;
-    isAppBuilding?: boolean;
+  appPushWebhook?: {
+    tokenVersion: string;
+    repoInfo: RepoInfo;
+    pushWebhookToken: string;
+  };
+  httpAuth?: IHttpAuth;
+  appName?: string;
+  isAppBuilding?: boolean;
 }
 export interface IAppDefSaved extends IAppDefinitionBase {
-    appPushWebhook: {
+  appPushWebhook:
+    | {
         tokenVersion: string;
         repoInfo: RepoInfoEncrypted;
         pushWebhookToken: string;
-    } | undefined;
-    httpAuth?: {
-        user: string;
-        passwordHashed: string;
-    };
+      }
+    | undefined;
+  httpAuth?: {
+    user: string;
+    passwordHashed: string;
+  };
 }

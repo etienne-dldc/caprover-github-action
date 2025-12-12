@@ -1,5 +1,5 @@
-import { IAppDef } from "./models/AppDefinition.js";
-import { AppDefinitionsResponse } from "./models/AppDefinitionsResponse.js";
+import type { IAppDef } from "./models/AppDefinition.js";
+import type { AppDefinitionsResponse } from "./models/AppDefinitionsResponse.js";
 
 interface CapRoverResponse<T> {
   status: number;

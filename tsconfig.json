@@ -1,23 +1,13 @@
 {
   "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true,
     "target": "esnext",
     "module": "nodenext",
-    "lib": ["ESNext"],
-    "types": ["node"],
-    "moduleResolution": "nodenext",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "sourceMap": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "strict": true
   },
   "include": ["scripts"]
 }

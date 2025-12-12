@@ -1,19 +1,19 @@
-import { ServerDockerInfo } from './ServerDockerInfo';
+import type { ServerDockerInfo } from "./ServerDockerInfo.ts";
 export interface RestoringNode {
-    oldIp: string;
-    newIp: string;
-    user: string;
-    privateKeyPath: string;
+  oldIp: string;
+  newIp: string;
+  user: string;
+  privateKeyPath: string;
 }
 export interface OldNodesForReference {
-    appsLockOnThisNode: string[];
-    nodeData: ServerDockerInfo;
+  appsLockOnThisNode: string[];
+  nodeData: ServerDockerInfo;
 }
 export interface RestoringInfo {
-    nodesMapping: RestoringNode[];
-    oldNodesForReference: OldNodesForReference[];
+  nodesMapping: RestoringNode[];
+  oldNodesForReference: OldNodesForReference[];
 }
 export interface BackupMeta {
-    salt: string;
-    nodes: ServerDockerInfo[];
+  salt: string;
+  nodes: ServerDockerInfo[];
 }
