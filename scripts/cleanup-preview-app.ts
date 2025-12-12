@@ -31,12 +31,8 @@ export async function cleanupPreviewApp(): Promise<void> {
     await caprover.deleteApp(env.caproverServer, token, appName, [], undefined);
     console.log(`App "${appName}" deleted successfully.`);
   } catch (error) {
-    throw new Error(
-      `Failed to delete app "${appName}": ${
-        error && (error as Error).message
-          ? (error as Error).message
-          : String(error)
-      }`
-    );
+    throw new Error(`Failed to delete app "${appName}"`, {
+      cause: error,
+    });
   }
 }

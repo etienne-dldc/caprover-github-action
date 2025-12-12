@@ -1,5 +1,6 @@
 import type { IAppDef } from "./models/AppDefinition.ts";
 import type { AppDefinitionsResponse } from "./models/AppDefinitionsResponse.ts";
+import { withRetry } from "./utils.ts";
 
 interface CapRoverResponse<T> {
   status: number;
@@ -69,7 +70,9 @@ async function performFetch<T>(
     validateResponse(data);
     return data.data;
   } catch (error) {
-    throw new Error(`API request failed: ${(error as Error).message}`);
+    throw new Error(`API request failed`, {
+      cause: error,
+    });
   }
 }
 
@@ -82,41 +85,47 @@ export async function login(
   password: string,
   otpToken?: string
 ): Promise<LoginResponse> {
-  try {
-    const headers = {
-      "Content-Type": "application/json",
-      "x-namespace": "captain",
-    };
+  return withRetry(async () => {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "x-namespace": "captain",
+      };
 
-    const response = await fetch(`${baseUrl}/api/v2/login`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ password, otpToken: otpToken || undefined }),
-    });
+      const response = await fetch(`${baseUrl}/api/v2/login`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ password, otpToken: otpToken || undefined }),
+      });
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errBody}`);
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errBody}`);
+      }
+
+      const data = (await response.json()) as CapRoverResponse<LoginResponse>;
+      validateResponse(data);
+      return data.data;
+    } catch (error) {
+      throw new Error(`Login failed`, {
+        cause: error,
+      });
     }
-
-    const data = (await response.json()) as CapRoverResponse<LoginResponse>;
-    validateResponse(data);
-    return data.data;
-  } catch (error) {
-    throw new Error(`Login failed: ${(error as Error).message}`);
-  }
+  });
 }
 
 export async function getAllApps(
   baseUrl: string,
   token: string
 ): Promise<AppDefinitionsResponse> {
-  return performFetch<AppDefinitionsResponse>(
-    baseUrl,
-    token,
-    "GET",
-    "/api/v2/user/apps/appDefinitions",
-    {}
+  return withRetry(() =>
+    performFetch<AppDefinitionsResponse>(
+      baseUrl,
+      token,
+      "GET",
+      "/api/v2/user/apps/appDefinitions",
+      {}
+    )
   );
 }
 
@@ -127,12 +136,14 @@ export async function registerNewApp(
   projectId: string,
   hasPersistentData: boolean
 ): Promise<unknown> {
-  return performFetch(
-    baseUrl,
-    token,
-    "POST",
-    `/api/v2/user/apps/appDefinitions/register`,
-    { appName, projectId: projectId ?? "", hasPersistentData }
+  return withRetry(() =>
+    performFetch(
+      baseUrl,
+      token,
+      "POST",
+      `/api/v2/user/apps/appDefinitions/register`,
+      { appName, projectId: projectId ?? "", hasPersistentData }
+    )
   );
 }
 
@@ -141,12 +152,14 @@ export async function enableSslForBaseDomain(
   token: string,
   appName: string
 ): Promise<unknown> {
-  return performFetch(
-    baseUrl,
-    token,
-    "POST",
-    "/api/v2/user/apps/appDefinitions/enablebasedomainssl",
-    { appName }
+  return withRetry(() =>
+    performFetch(
+      baseUrl,
+      token,
+      "POST",
+      "/api/v2/user/apps/appDefinitions/enablebasedomainssl",
+      { appName }
+    )
   );
 }
 
@@ -156,12 +169,14 @@ export async function updateConfigAndSave(
   appName: string,
   appDefinition: IAppDef
 ): Promise<unknown> {
-  return performFetch(
-    baseUrl,
-    token,
-    "POST",
-    "/api/v2/user/apps/appDefinitions/update",
-    { ...appDefinition, appName, projectId: appDefinition.projectId ?? "" }
+  return withRetry(() =>
+    performFetch(
+      baseUrl,
+      token,
+      "POST",
+      "/api/v2/user/apps/appDefinitions/update",
+      { ...appDefinition, appName, projectId: appDefinition.projectId ?? "" }
+    )
   );
 }
 
@@ -172,11 +187,13 @@ export async function deleteApp(
   volumes: unknown[],
   appNames?: string[]
 ): Promise<unknown> {
-  return performFetch(
-    baseUrl,
-    token,
-    "POST",
-    "/api/v2/user/apps/appDefinitions/delete",
-    { appName, volumes: volumes || [], appNames: appNames || undefined }
+  return withRetry(() =>
+    performFetch(
+      baseUrl,
+      token,
+      "POST",
+      "/api/v2/user/apps/appDefinitions/delete",
+      { appName, volumes: volumes || [], appNames: appNames || undefined }
+    )
   );
 }

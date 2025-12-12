@@ -48,13 +48,9 @@ export async function setupCaproverApp(): Promise<void> {
         throw new Error(`Failed to fetch newly created app "${appName}"`);
       }
     } catch (error) {
-      throw new Error(
-        `Failed to create app "${appName}": ${
-          error && (error as Error).message
-            ? (error as Error).message
-            : String(error)
-        }`
-      );
+      throw new Error(`Failed to create app "${appName}"`, {
+        cause: error,
+      });
     }
   }
 
@@ -72,9 +68,7 @@ export async function setupCaproverApp(): Promise<void> {
     } catch (sslError) {
       console.warn(
         `Warning: Failed to enable SSL: ${
-          sslError && (sslError as Error).message
-            ? (sslError as Error).message
-            : String(sslError)
+          sslError instanceof Error ? sslError.message : String(sslError)
         }`
       );
       console.log("Continuing without SSL...");
@@ -100,13 +94,9 @@ export async function setupCaproverApp(): Promise<void> {
       Object.assign(appDef, customConfig);
       hasChanges = true;
     } catch (error) {
-      throw new Error(
-        `Failed to parse config: ${
-          error && (error as Error).message
-            ? (error as Error).message
-            : String(error)
-        }`
-      );
+      throw new Error(`Failed to parse config`, {
+        cause: error,
+      });
     }
   }
 
