@@ -15,7 +15,7 @@ inputs:
     description: "CapRover server URL (e.g., https://caprover.example.com)"
     required: true
 
-  caprover-app-name:
+  app-name:
     description: "CapRover application name to setup or cleanup"
     required: true
 
@@ -29,8 +29,12 @@ inputs:
     required: false
     default: "false"
 
-  config:
-    description: "Additional app configuration as JSON (setup command only). Merges with app definition. Schema: { envVars?: IAppEnvVar[], volumes?: IAppVolume[], ports?: IAppPort[], ... }"
+  app-config:
+    description: "Additional app configuration as JSON (setup command only). Has higher priority than `app-config-path`. Schema: { envVars?: IAppEnvVar[], volumes?: IAppVolume[], ports?: IAppPort[], ... }"
+    required: false
+
+  app-config-path:
+    description: "Path to a JSON file containing app configuration (setup command only). Will be merged with app-config option. app-config option has higher priority. Correctly handles envVars and volumes merging."
     required: false
 
   cleanup-storage:
@@ -51,11 +55,6 @@ runs:
       with:
         node-version: "24"
 
-    - name: Install dependencies
-      shell: bash
-      working-directory: ${{ github.action_path }}
-      run: npm install
-
     - name: Run CapRover action
       id: caprover
       shell: bash
@@ -65,10 +64,11 @@ runs:
         COMMAND: ${{ inputs.command }}
         CAPROVER_PASSWORD: ${{ inputs.caprover-password }}
         CAPROVER_SERVER: ${{ inputs.caprover-server }}
-        CAPROVER_APP_NAME: ${{ inputs.caprover-app-name }}
+        CAPROVER_APP_NAME: ${{ inputs.app-name }}
         ENABLE_SSL: ${{ inputs.enable-ssl }}
         HAS_PERSISTENT_DATA: ${{ inputs.has-persistent-data }}
-        CONFIG: ${{ inputs.config }}
+        APP_CONFIG: ${{ inputs.app-config }}
+        APP_CONFIG_PATH: ${{ inputs.app-config-path }}
         CLEANUP_STORAGE: ${{ inputs.cleanup-storage }}
 
 branding:

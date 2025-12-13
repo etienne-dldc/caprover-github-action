@@ -1,5 +1,6 @@
-import * as caprover from "./caprover.ts";
-import { validateCapRoverEnv, withRetry } from "./utils.ts";
+import * as caprover from "./utils/caprover.ts";
+import { validateCapRoverEnv } from "./utils/validateCapRoverEnv.ts";
+import { withRetry } from "./utils/withRetry.ts";
 
 export async function cleanupPreviewApp(): Promise<void> {
   const env = validateCapRoverEnv();

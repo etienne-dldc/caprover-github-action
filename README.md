@@ -12,15 +12,38 @@ A GitHub Action for setting up and cleaning up CapRover applications. Supports b
 
 ### Common Inputs
 
-| Input                 | Description                                                                   | Required |
-| --------------------- | ----------------------------------------------------------------------------- | -------- |
-| `command`             | Action to perform: `"setup"` or `"cleanup"`                                   | Yes      |
-| `caprover-password`   | CapRover admin password                                                       | Yes      |
-| `caprover-server`     | CapRover server URL (e.g., `https://caprover.example.com`)                    | Yes      |
-| `caprover-app-name`   | CapRover application name to setup or cleanup                                 | Yes      |
-| `enable-ssl`          | Enable SSL for the app (setup only, default: `"true"`)                        | No       |
-| `has-persistent-data` | Mark app as having persistent data (setup only, default: `"false"`)           | No       |
-| `config`              | Additional app configuration as JSON (setup only, merged with app definition) | No       |
+| Input                 | Description                                                                                   | Required |
+| --------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| `command`             | Action to perform: `"setup"` or `"cleanup"`                                                   | ✅       |
+| `caprover-password`   | CapRover admin password                                                                       | ✅       |
+| `caprover-server`     | CapRover server URL (e.g., `https://caprover.example.com`)                                    | ✅       |
+| `app-name`            | CapRover application name to setup or cleanup                                                 | ✅       |
+| `enable-ssl`          | Enable SSL for the app (setup only, default: `"true"`)                                        | -        |
+| `has-persistent-data` | Mark app as having persistent data (setup only, default: `"false"`)                           | -        |
+| `app-config`          | Additional app configuration as JSON (setup only). Has higher priority than `app-config-path` | -        |
+| `app-config-path`     | Path to a JSON file containing app configuration (setup only). Use for base config            | -        |
+| `cleanup-storage`     | Delete storage volumes when cleaning up the app (cleanup only, default: `"true"`)             | -        |
+
+### ⚠️ App Name Constraints
+
+The `app-name` input has the following constraints:
+
+- **Characters**: Only lowercase alphanumeric characters and dashes (`a-z`, `0-9`, `-`)
+- **Length**: Cannot be too long (CapRover has internal limits on app name length)
+- **Format**: Cannot start or end with a dash
+- **Double dashes**: Cannot contain consecutive dashes (`--`)
+
+#### PR Preview Recommendations
+
+For PR preview deployments, it's **recommended to use the PR number** rather than the branch name to avoid issues with special characters and length:
+
+```yaml
+# ✅ Good - short and safe
+app-name: preview-${{ github.event.pull_request.number }}
+
+# ❌ Avoid - branch names may contain special characters that aren't allowed
+app-name: preview-${{ github.head_ref }}
+```
 
 ## Outputs
 
@@ -42,7 +65,7 @@ Create or configure a CapRover application:
     command: "setup"
     caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
     caprover-server: ${{ vars.CAPROVER_SERVER }}
-    caprover-app-name: my-app
+    app-name: my-app
 
 - name: Deploy with CapRover CLI
   run: |
@@ -64,10 +87,12 @@ Delete a CapRover application (useful for PR cleanup):
     command: "cleanup"
     caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
     caprover-server: ${{ vars.CAPROVER_SERVER }}
-    caprover-app-name: my-app-preview-${{ github.head_ref }}
+    app-name: my-app-preview-${{ github.event.pull_request.number }}
 ```
 
 ### Complete Example: PR Preview Deployments
+
+This example demonstrates deploying a preview app for each pull request. The app will be automatically created (or updated) on PR open/update.
 
 ```yaml
 name: Deploy Preview
@@ -83,9 +108,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create tar file
-        run: git ls-files | tar -czf deploy.tar -T -
-
       - name: Setup CapRover App
         id: caprover
         uses: etienne-dldc/caprover-github-action@v1
@@ -93,14 +115,17 @@ jobs:
           command: "setup"
           caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
           caprover-server: ${{ vars.CAPROVER_SERVER }}
-          caprover-app-name: my-app-preview-${{ github.head_ref }}
+          app-name: my-app-preview-${{ github.event.pull_request.number }}
           enable-ssl: "true"
+
+      - name: Create tar file
+        run: git ls-files | tar -czf deploy.tar -T -
 
       - name: Deploy to CapRover
         run: |
           caprover deploy \
             --caproverUrl ${{ vars.CAPROVER_SERVER }} \
-            --caproverApp my-app-preview-${{ github.head_ref }} \
+            --caproverApp my-app-preview-${{ github.event.pull_request.number }} \
             --appToken ${{ steps.caprover.outputs.app-token }} \
             --tarFile deploy.tar
 
@@ -112,11 +137,13 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Preview deployed to: https://my-app-preview-${{ github.head_ref }}.example.com'
+              body: '🚀 Preview deployed to: https://my-app-preview-${{ github.event.pull_request.number }}.example.com'
             })
 ```
 
 ### Complete Example: PR Cleanup
+
+This example demonstrates cleaning up the preview app when the pull request is closed.
 
 ```yaml
 name: Cleanup Preview
@@ -137,7 +164,7 @@ jobs:
           command: "cleanup"
           caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
           caprover-server: ${{ vars.CAPROVER_SERVER }}
-          caprover-app-name: my-app-preview-${{ github.head_ref }}
+          app-name: my-app-preview-${{ github.event.pull_request.number }}
 ```
 
 ## Setup Instructions
@@ -153,9 +180,49 @@ jobs:
 
 ### Configuration Options
 
-The `config` input allows you to merge custom configuration directly into the app definition. Pass a JSON object with any properties from the `IAppDefinitionBase` interface.
+There are two ways to configure your CapRover application, and they can be used together:
 
-#### Example: Environment Variables, Volumes, and Ports
+1. **File-based configuration** (`app-config-path`) - Use a JSON file in your repository for base configuration
+2. **Inline configuration** (`app-config`) - Pass configuration directly via JSON input, which has **higher priority**
+
+This two-level approach is useful for:
+
+- Defining base configuration in a committed JSON file
+- Overriding specific values from GitHub secrets at deployment time
+- Example: Base config defines app structure, inline config provides secrets
+
+#### Configuration Priority
+
+When both `app-config-path` and `app-config` are provided:
+
+- **Base config** (from file) is loaded first
+- **Inline config** (from input) is merged on top, **overriding any conflicting values**
+- Special handling for arrays (envVars, volumes, ports): merged by key/port, not replaced
+
+#### Example: Separating Base Config from Secrets
+
+**File: `caprover-config.json`** (commit to repository)
+
+```json
+{
+  "envVars": [
+    {
+      "key": "NODE_ENV",
+      "value": "production"
+    }
+  ],
+  "volumes": {
+    "/data": "my-volume",
+    "/logs": "/var/logs"
+  },
+  "ports": {
+    "3000": 3000
+  },
+  "websocketSupport": true
+}
+```
+
+**Workflow: Override with secrets**
 
 ```yaml
 - uses: etienne-dldc/caprover-github-action@v1
@@ -163,8 +230,35 @@ The `config` input allows you to merge custom configuration directly into the ap
     command: "setup"
     caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
     caprover-server: ${{ vars.CAPROVER_SERVER }}
-    caprover-app-name: my-app
-    config: |
+    app-name: my-app
+    app-config-path: caprover-config.json
+    app-config: |
+      {
+        "envVars": [
+          {
+            "key": "API_KEY",
+            "value": "${{ secrets.API_KEY }}"
+          },
+          {
+            "key": "DATABASE_PASSWORD",
+            "value": "${{ secrets.DB_PASSWORD }}"
+          }
+        ]
+      }
+```
+
+Result: Base config merged with secrets, where both envVars are included (merged by key).
+
+#### Example: Inline Configuration
+
+```yaml
+- uses: etienne-dldc/caprover-github-action@v1
+  with:
+    command: "setup"
+    caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
+    caprover-server: ${{ vars.CAPROVER_SERVER }}
+    app-name: my-app
+    app-config: |
       {
         "envVars": {
           "NODE_ENV": "production",
@@ -197,9 +291,20 @@ Can be either an object or an array format:
 }
 
 // Or array format
+"envVars": [
+  {
+    key: "NODE_ENV",
+    value: "production"
+  },
+]
+```
+
+Environment variable array format definition:
+
+```ts
 interface IAppEnvVar {
-  key: string; // required
-  value: string; // required
+  key: string;
+  value: string;
 }
 ```
 
@@ -217,8 +322,24 @@ Can be either an object or an array format:
 }
 
 // Or array format
+"volumes": [
+  {
+    containerPath: "/data",
+    volumeName: "my-volume"
+  },
+  {
+    containerPath: "/logs",
+    hostPath: "/var/logs",
+    mode: "ro"
+  }
+]
+```
+
+Volume array format definition:
+
+```ts
 interface IAppVolume {
-  containerPath: string; // required
+  containerPath: string;
   volumeName?: string; // optional - named volume to use
   hostPath?: string; // optional - host path for bind mounts
   mode?: string; // optional - e.g., "ro" for read-only
@@ -239,6 +360,24 @@ Can be either an object or an array format:
 }
 
 // Or array format
+"ports": [
+  {
+    containerPort: 3000,
+    hostPort: 3000,
+    protocol: "tcp"
+  },
+  {
+    containerPort: 8000,
+    hostPort: 8001,
+    protocol: "udp",
+    publishMode: "host"
+  }
+]
+```
+
+Port array format definition:
+
+```ts
 interface IAppPort {
   containerPort: number; // required
   hostPort: number; // required
@@ -293,10 +432,8 @@ All properties are validated for correct types and formats. Invalid configuratio
 
 SSL configuration failures are non-fatal and won't stop the deployment. The action will continue without SSL if it fails.
 
+You can log into your CapRover dashboard to manually enable SSL yourself or try to re-run the action.
+
 ### App Not Found During Cleanup
 
 If the application doesn't exist, cleanup exits gracefully without error.
-
-### Missing Environment Variables
-
-The action requires `CAPROVER_PASSWORD`, `CAPROVER_SERVER`, and `CAPROVER_APP_NAME`. All three must be provided.

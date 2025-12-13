@@ -1,5 +1,4 @@
-import type { IAppDef } from "./models/AppDefinition.ts";
-import type { AppDefinitionsResponse } from "./models/AppDefinitionsResponse.ts";
+import type { AppDefinitionsResponse, IAppDef } from "../models/index.ts";
 
 interface CapRoverResponse<T> {
   status: number;

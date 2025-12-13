@@ -1,7 +1,12 @@
 import { appendFileSync } from "fs";
-import * as caprover from "./caprover.ts";
 import type { IAppDef } from "./models/AppDefinition.ts";
-import { parseConfig, validateCapRoverEnv, withRetry } from "./utils.ts";
+import * as caprover from "./utils/caprover.ts";
+import { configNeedsSaving } from "./utils/configNeedsSaving.ts";
+import { loadConfigFromPath } from "./utils/loadConfigFromPath.ts";
+import { mergeConfigs } from "./utils/mergeConfigs.ts";
+import { parseConfig } from "./utils/parseConfig.ts";
+import { validateCapRoverEnv } from "./utils/validateCapRoverEnv.ts";
+import { withRetry } from "./utils/withRetry.ts";
 
 export async function setupCaproverApp(): Promise<void> {
   const env = validateCapRoverEnv();
@@ -38,17 +43,16 @@ export async function setupCaproverApp(): Promise<void> {
       console.log(`App "${appName}" created successfully.`);
 
       // Fetch app definition
-      const appsAfterCreate = await withRetry(() =>
-        caprover.getAllApps(env.caproverServer, token)
-      );
-      appDef =
-        appsAfterCreate.appDefinitions?.find(
-          (app) => app.appName === appName
-        ) || null;
+      await withRetry(async () => {
+        allAppDefs = await caprover.getAllApps(env.caproverServer, token);
+        appDef =
+          allAppDefs.appDefinitions?.find((app) => app.appName === appName) ||
+          null;
 
-      if (!appDef) {
-        throw new Error(`Failed to fetch newly created app "${appName}"`);
-      }
+        if (!appDef) {
+          throw new Error(`Failed to fetch newly created app "${appName}"`);
+        }
+      });
     } catch (error) {
       throw new Error(`Failed to create app "${appName}"`, {
         cause: error,
@@ -65,8 +69,11 @@ export async function setupCaproverApp(): Promise<void> {
   if (enableSsl && !appDef.hasDefaultSubDomainSsl) {
     console.log(`Enabling SSL for app "${appName}"...`);
     try {
-      await withRetry(() =>
-        caprover.enableSslForBaseDomain(env.caproverServer, token, appName)
+      await withRetry(
+        () =>
+          caprover.enableSslForBaseDomain(env.caproverServer, token, appName),
+        5,
+        1000
       );
       console.log(`SSL enabled for app "${appName}".`);
     } catch (sslError) {
@@ -79,24 +86,33 @@ export async function setupCaproverApp(): Promise<void> {
     }
   }
 
-  // Accumulate all configuration changes
-  let hasChanges = false;
-
-  // Enable app deploy token
-  if (!appDef.appDeployTokenConfig?.enabled) {
-    appDef.appDeployTokenConfig = {
+  let expectedAppDef: Partial<IAppDef> = {
+    // Enable app deploy token
+    appDeployTokenConfig: {
+      ...appDef.appDeployTokenConfig,
       enabled: true,
-    };
-    hasChanges = true;
+    },
+  };
+
+  // Apply custom config from file path if provided
+  const configPath = process.env.APP_CONFIG_PATH;
+  if (configPath) {
+    try {
+      console.log(`Loading config from file: ${configPath}`);
+      Object.assign(expectedAppDef, loadConfigFromPath(configPath));
+    } catch (error) {
+      throw new Error(`Failed to load config from path`, {
+        cause: error,
+      });
+    }
   }
 
-  // Apply custom config if provided
-  const configJson = process.env.CONFIG;
+  // Apply custom config from JSON string if provided (has higher priority than file)
+  const configJson = process.env.APP_CONFIG;
   if (configJson) {
     try {
       const customConfig = parseConfig(configJson);
-      Object.assign(appDef, customConfig);
-      hasChanges = true;
+      expectedAppDef = mergeConfigs(expectedAppDef, customConfig);
     } catch (error) {
       throw new Error(`Failed to parse config`, {
         cause: error,
@@ -104,15 +120,17 @@ export async function setupCaproverApp(): Promise<void> {
     }
   }
 
-  // Save all changes at once
-  if (hasChanges) {
+  // Apply merged config to app definition
+  const needsSaving = configNeedsSaving(appDef, expectedAppDef);
+  if (needsSaving) {
+    const mergedConfig = Object.assign({}, appDef, expectedAppDef);
     console.log(`Updating app "${appName}"...`);
     await withRetry(() =>
       caprover.updateConfigAndSave(
         env.caproverServer,
         token,
         appName,
-        appDef!
+        mergedConfig
       )
     );
   }
