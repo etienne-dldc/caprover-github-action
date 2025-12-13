@@ -19,6 +19,10 @@ inputs:
     description: "CapRover application name to setup or cleanup"
     required: true
 
+  project-name:
+    description: "CapRover project name (setup command only). Will be created if it doesn't exist. Will be used when creating new applications."
+    required: false
+
   enable-ssl:
     description: "Enable SSL for the app (setup command only, default: true)"
     required: false
@@ -65,6 +69,7 @@ runs:
         CAPROVER_PASSWORD: ${{ inputs.caprover-password }}
         CAPROVER_SERVER: ${{ inputs.caprover-server }}
         CAPROVER_APP_NAME: ${{ inputs.app-name }}
+        PROJECT_NAME: ${{ inputs.project-name }}
         ENABLE_SSL: ${{ inputs.enable-ssl }}
         HAS_PERSISTENT_DATA: ${{ inputs.has-persistent-data }}
         APP_CONFIG: ${{ inputs.app-config }}

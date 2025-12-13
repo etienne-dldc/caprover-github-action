@@ -1,4 +1,8 @@
-import type { AppDefinitionsResponse, IAppDef } from "../models/index.ts";
+import type {
+  AppDefinitionsResponse,
+  IAppDef,
+  ProjectsResponse,
+} from "../models/index.ts";
 
 interface CapRoverResponse<T> {
   status: number;
@@ -181,5 +185,33 @@ export async function deleteApp(
     "POST",
     "/api/v2/user/apps/appDefinitions/delete",
     { appName, volumes: volumes || [], appNames: appNames || undefined }
+  );
+}
+
+export async function getProjects(
+  baseUrl: string,
+  token: string
+): Promise<ProjectsResponse> {
+  return performFetch<ProjectsResponse>(
+    baseUrl,
+    token,
+    "GET",
+    "/api/v2/user/projects",
+    {}
+  );
+}
+
+export async function registerProject(
+  baseUrl: string,
+  token: string,
+  projectName: string,
+  description?: string
+): Promise<unknown> {
+  return performFetch(
+    baseUrl,
+    token,
+    "POST",
+    "/api/v2/user/projects/register",
+    { id: "", name: projectName, description: description || "" }
   );
 }

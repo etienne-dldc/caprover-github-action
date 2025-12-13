@@ -16,6 +16,33 @@ export async function setupCaproverApp(): Promise<void> {
   // Use app name directly from environment
   const appName = env.caproverAppName;
 
+  // Handle project creation if project-name is provided
+  let projectId = "";
+  if (env.projectName) {
+    console.log(`Checking for project: ${env.projectName}`);
+    const projectsResponse = await withRetry(() =>
+      caprover.getProjects(env.caproverServer, token)
+    );
+    const projects = projectsResponse.projects || [];
+
+    let project = projects.find((p) => p.name === env.projectName);
+
+    if (!project) {
+      console.log(`Project "${env.projectName}" not found. Creating it...`);
+      const newProject = (await withRetry(() =>
+        caprover.registerProject(env.caproverServer, token, env.projectName!)
+      )) as any; // API returns a project object
+      project = newProject;
+      console.log(`Project "${env.projectName}" created successfully.`);
+    } else {
+      console.log(`Project "${env.projectName}" already exists.`);
+    }
+
+    if (project) {
+      projectId = project.id;
+    }
+  }
+
   console.log(`Checking for app: ${appName}`);
 
   // Get all apps and check if our app exists
@@ -36,7 +63,7 @@ export async function setupCaproverApp(): Promise<void> {
           env.caproverServer,
           token,
           appName,
-          "",
+          projectId,
           hasPersistentData
         )
       );

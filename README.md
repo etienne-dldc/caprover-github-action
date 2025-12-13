@@ -12,17 +12,18 @@ A GitHub Action for setting up and cleaning up CapRover applications. Supports b
 
 ### Common Inputs
 
-| Input                 | Description                                                                                   | Required |
-| --------------------- | --------------------------------------------------------------------------------------------- | -------- |
-| `command`             | Action to perform: `"setup"` or `"cleanup"`                                                   | ✅       |
-| `caprover-password`   | CapRover admin password                                                                       | ✅       |
-| `caprover-server`     | CapRover server URL (e.g., `https://caprover.example.com`)                                    | ✅       |
-| `app-name`            | CapRover application name to setup or cleanup                                                 | ✅       |
-| `enable-ssl`          | Enable SSL for the app (setup only, default: `"true"`)                                        | -        |
-| `has-persistent-data` | Mark app as having persistent data (setup only, default: `"false"`)                           | -        |
-| `app-config`          | Additional app configuration as JSON (setup only). Has higher priority than `app-config-path` | -        |
-| `app-config-path`     | Path to a JSON file containing app configuration (setup only). Use for base config            | -        |
-| `cleanup-storage`     | Delete storage volumes when cleaning up the app (cleanup only, default: `"true"`)             | -        |
+| Input                 | Description                                                                                           | Required |
+| --------------------- | ----------------------------------------------------------------------------------------------------- | -------- |
+| `command`             | Action to perform: `"setup"` or `"cleanup"`                                                           | ✅       |
+| `caprover-password`   | CapRover admin password                                                                               | ✅       |
+| `caprover-server`     | CapRover server URL (e.g., `https://caprover.example.com`)                                            | ✅       |
+| `app-name`            | CapRover application name to setup or cleanup                                                         | ✅       |
+| `project-name`        | CapRover project name (setup only). Will be created if it doesn't exist. Used when creating new apps. | -        |
+| `enable-ssl`          | Enable SSL for the app (setup only, default: `"true"`)                                                | -        |
+| `has-persistent-data` | Mark app as having persistent data (setup only, default: `"false"`)                                   | -        |
+| `app-config`          | Additional app configuration as JSON (setup only). Has higher priority than `app-config-path`         | -        |
+| `app-config-path`     | Path to a JSON file containing app configuration (setup only). Use for base config                    | -        |
+| `cleanup-storage`     | Delete storage volumes when cleaning up the app (cleanup only, default: `"true"`)                     | -        |
 
 ### ⚠️ App Name Constraints
 
@@ -76,6 +77,30 @@ Create or configure a CapRover application:
       --tarFile deploy.tar
 ```
 
+### Setup Command with Project
+
+Create or configure a CapRover application within a project:
+
+```yaml
+- name: Setup CapRover App with Project
+  id: caprover
+  uses: etienne-dldc/caprover-github-action@v1
+  with:
+    command: "setup"
+    caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
+    caprover-server: ${{ vars.CAPROVER_SERVER }}
+    app-name: my-app
+    project-name: my-project
+
+- name: Deploy with CapRover CLI
+  run: |
+    caprover deploy \
+      --caproverUrl ${{ vars.CAPROVER_SERVER }} \
+      --caproverApp my-app \
+      --appToken ${{ steps.caprover.outputs.app-token }} \
+      --tarFile deploy.tar
+```
+
 ### Cleanup Command
 
 Delete a CapRover application (useful for PR cleanup):
@@ -116,6 +141,7 @@ jobs:
           caprover-password: ${{ secrets.CAPROVER_PASSWORD }}
           caprover-server: ${{ vars.CAPROVER_SERVER }}
           app-name: my-app-preview-${{ github.event.pull_request.number }}
+          project-name: my-app-previews
           enable-ssl: "true"
 
       - name: Create tar file
