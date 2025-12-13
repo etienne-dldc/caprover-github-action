@@ -4,12 +4,14 @@ interface ValidatedEnv {
   caproverPassword: string;
   caproverAppName: string;
   caproverServer: string;
+  cleanupStorage: boolean;
 }
 
 export function validateCapRoverEnv(): ValidatedEnv {
   const password = process.env.CAPROVER_PASSWORD;
   const appName = process.env.CAPROVER_APP_NAME;
   const server = process.env.CAPROVER_SERVER;
+  const cleanupStorage = process.env.CLEANUP_STORAGE !== "false";
 
   const missing: string[] = [];
   if (!password) missing.push("CAPROVER_PASSWORD");
@@ -26,6 +28,7 @@ export function validateCapRoverEnv(): ValidatedEnv {
     caproverPassword: password as string,
     caproverAppName: appName as string,
     caproverServer: server as string,
+    cleanupStorage,
   };
 }
 

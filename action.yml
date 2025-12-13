@@ -33,6 +33,11 @@ inputs:
     description: "Additional app configuration as JSON (setup command only). Merges with app definition. Schema: { envVars?: IAppEnvVar[], volumes?: IAppVolume[], ports?: IAppPort[], ... }"
     required: false
 
+  cleanup-storage:
+    description: "Delete storage volumes when cleaning up the app (cleanup command only, default: true)"
+    required: false
+    default: "true"
+
 outputs:
   app-token:
     description: "The CapRover deploy token for the app (only for setup command)"
@@ -64,6 +69,7 @@ runs:
         ENABLE_SSL: ${{ inputs.enable-ssl }}
         HAS_PERSISTENT_DATA: ${{ inputs.has-persistent-data }}
         CONFIG: ${{ inputs.config }}
+        CLEANUP_STORAGE: ${{ inputs.cleanup-storage }}
 
 branding:
   icon: "cloud"

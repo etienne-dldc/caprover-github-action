@@ -28,9 +28,28 @@ export async function cleanupPreviewApp(): Promise<void> {
   console.log(`Found app "${appName}". Deleting...`);
 
   try {
-    // Delete the app with all its volumes
+    // Extract volume names if cleanup-storage is enabled
+    const volumesToDelete = env.cleanupStorage
+      ? (appDef.volumes || []).map((vol) => vol.volumeName).filter(Boolean)
+      : [];
+
+    if (env.cleanupStorage) {
+      console.log(
+        `Cleanup storage: ${env.cleanupStorage}, volumes to delete: ${
+          volumesToDelete.join(", ") || "none"
+        }`
+      );
+    }
+
+    // Delete the app with volumes if cleanup-storage is enabled
     await withRetry(() =>
-      caprover.deleteApp(env.caproverServer, token, appName, [], undefined)
+      caprover.deleteApp(
+        env.caproverServer,
+        token,
+        appName,
+        volumesToDelete,
+        undefined
+      )
     );
     console.log(`App "${appName}" deleted successfully.`);
   } catch (error) {
