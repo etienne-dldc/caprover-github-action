@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type { IAppDef } from "../models/index.ts";
 import { validateAppConfig } from "./validateAppConfig.ts";
 
@@ -8,8 +9,6 @@ import { validateAppConfig } from "./validateAppConfig.ts";
  */
 
 export function loadConfigFromPath(filePath: string): Partial<IAppDef> {
-  const { readFileSync } = require("fs");
-
   try {
     const fileContent = readFileSync(filePath, "utf-8");
     const config = JSON.parse(fileContent);

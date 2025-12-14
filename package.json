@@ -4,6 +4,9 @@
   "description": "GitHub Action for setting up and cleaning up CapRover applications",
   "type": "module",
   "main": "action.yml",
+  "scripts": {
+    "test": "node --test tests/*.test.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
